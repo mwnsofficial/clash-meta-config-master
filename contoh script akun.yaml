@@ -1,0 +1,55 @@
+proxies:
+- name: "vless-tcp"
+  type: vless
+  server: server
+  port: 443
+  uuid: uuid
+  network: tcp
+  servername: example.com
+  #flow: xtls-rprx-direct atau xtls-rprx-origin
+  #skip-cert-verify: true
+
+proxies:   
+- name: "vless-ws"
+  type: vless
+  server: server
+  port: 443
+  uuid: uuid
+  udp: true
+  tls: true
+  network: ws
+  servername: example.com # priority over wss host
+  #skip-cert-verify: true
+  ws-opts:
+    path: "/"
+    headers:
+      Host: example.com
+
+proxies:
+- name: "hysteria"
+  type: hysteria
+  server: server.com
+  port: 443
+  auth_str: yourpassword
+  #obfs: yourpassword
+  alpn: h3
+  protocol: udp
+  up: '30 Mbps'
+  down: '200 Mbps'
+  #sni: server.com
+  #skip-cert-verify: false
+  #recv_window_conn: 12582912
+  #recv_window: 52428800
+  #auth_str: "yubiyubi"
+  #ca: "./my.ca"
+  #ca_str: "xyz"
+  #disable_mtu_discovery: false
+  
+proxies:
+  - name: "http"
+    type: http
+    server: server
+    port: 443
+      headers:
+        X-T5-Auth: "1962xxxxx709"
+        User-Agent: "okhttp/3.11.0 Dalvik/2.1.0 ...... "
