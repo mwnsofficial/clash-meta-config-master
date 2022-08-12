@@ -1,0 +1,221 @@
+# port: 7890
+# socks-port: 7891
+mixed-port: 7890
+# redir-port: 7892
+# tproxy-port: 7893
+
+# authentication:
+#  - "user1:pass1"
+#  - "user2:pass2"
+
+geodata-mode: true
+tcp-concurrent: true
+allow-lan: true
+bind-address:
+  '*'
+  # 192.168.122.11
+  # "[aaaa::a8aa:ff:fe09:57d8]" 
+mode: rule
+log-level: info
+ipv6: false
+external-controller: 127.0.0.1:9090
+external-ui: folder
+secret: ""
+
+
+interface-name: en0
+routing-mark: 6666
+
+profile:
+  store-selected: false
+  store-fake-ip: true
+  
+sniffer:
+  enable: true
+  sniffing:
+    - tls
+    - http
+  skip-domain:
+  - 'Mijia Cloud'
+  - 'dlg.io.mi.com'
+  - '+.apple.com'
+  - '*.baidu.com'
+    
+  force-domain:
+  - '+'
+  - 'google.com'
+    
+  port-whitelist:
+  - 80
+  - 443
+  - 8000-9000
+
+hosts:
+  '*.clash.dev': 127.0.0.1
+  '.dev': 127.0.0.1
+  'alpha.clash.dev': '::1'
+dns:
+  enable: true
+  listen: 0.0.0.0:53
+  ipv6: false
+  default-nameserver:
+  - 114.114.114.114
+  - 8.8.8.8
+    
+  nameserver-policy:
+    'www.baidu.com': 'https://223.5.5.5/dns-query'
+    '+.internal.crop.com': '114.114.114.114'
+  
+  enhanced-mode: redir-host
+  fake-ip-range: 198.18.0.1/16
+  use-hosts: true
+  
+  fake-ip-filter:
+  - '*.lan'
+  - '*.linksys.com'
+  - '+.pool.ntp.org'
+  - localhost.ptlogin2.qq.com
+  
+  proxy-server-nameserver:
+  - tls://1.0.0.1:853
+
+  nameserver:
+  - 114.114.114.114
+  - https://doh.pub/dns-query
+  - tls://101.101.101.101:853
+  - dhcp://en0
+    
+  fallback:
+    - https://doh.dns.sb/dns-query
+    - tcp://208.67.222.222:443
+    - quic://a.passcloud.xyz:784
+    - 'tls://8.8.4.4:853#DNSg'
+                                     
+  fallback-filter:
+  geoip: true
+  geoip-code: CN
+  geosite:
+  - gfw
+  ipcidr:
+  - 240.0.0.0/4
+  domain:
+  - '+.google.com'
+  - '+.facebook.com'
+  - '+.youtube.com'
+      
+proxy-groups:
+- name: DNSg
+  type: url-test
+  proxies:
+  - ss1
+  - ss2
+
+- name: "relay"
+  type: relay     
+  proxies:
+  - http
+  - vmess
+  - ss1
+    
+- name: "auto" 
+  type: url-test
+  proxies:
+  - ss1
+  - ss2
+  - vmess1
+  tolerance: 150
+  lazy: true
+  url: 'http://www.gstatic.com/generate_204'
+  interval: 300
+  disable-udp: false
+  filter: 'HK'
+
+- name: "fallback-auto"
+  type: fallback
+  proxies:
+  - ss1
+  - ss2
+  - vmess1
+  url: 'http://www.gstatic.com/generate_204'
+  interval: 300
+  lazy: true
+  disable-udp: false
+  filter: 'HK'
+
+- name: "load-balance"
+  type: load-balance
+  proxies:
+  - ss1
+  - ss2
+  - vmess1
+  url: 'http://www.gstatic.com/generate_204'
+  interval: 300
+  lazy: true
+  disable-udp: false
+  filter: 'HK'
+  strategy: round-robin
+                              
+- name: Proxy
+  type: select
+  disable-udp: false
+  proxies:
+  - PASS
+  - ss1
+  - ss2
+  - vmess1
+  - auto
+  filter: 'HK'
+ 
+- name: en1
+  type: select
+  interface-name: en1
+  proxies:
+  - DIRECT 
+
+- name: UseProvider
+  type: select
+  use:
+  - provider1
+  filter: 'HK'
+  proxies:
+  - Proxy
+  - DIRECT
+
+proxy-providers:
+  test:
+    type: file
+    path: /test.yaml
+    health-check:
+      enable: true
+      interval: 99
+      url: http://www.gstatic.com/generate_204
+rules:
+  - DOMAIN-SUFFIX,githubusercontent.com,auto
+  - DOMAIN-SUFFIX,ad.com,REJECT
+  - DOMAIN-SUFFIX,bilibili.com,DIRECT,tcp
+  - DOMAIN,google.com,auto
+  - DOMAIN-KEYWORD,google,auto
+  - IP-CIDR,127.0.0.0/8,DIRECT
+  - IP-CIDR,122.122.0.0/8,DIRECT,no-resolve
+  - SRC-IP-CIDR,192.168.1.201/32,DIRECT
+  - DST-PORT,123/136/137-139,DIRECT
+  - SRC-PORT,123/136/137-139,DIRECT,udp
+  - IN-TYPE,SOCKS5/HTTP,auto
+  - AND,((DOMAIN,baidu.com),(NETWORK,UDP)),DIRECT
+  - OR,((NETWORK,UDP),(DOMAIN,baidu.com)),REJECT
+  - NOT,((DOMAIN,baidu.com)),PROXY
+  - AND,((OR,((DOMAIN-KEYWORD,bilibili),(DOMAIN-KEYWORD,douyu))),(NETWORK,UDP)),REJECT
+  - GEOSITE,category-ads-all,REJECT
+  - GEOSITE,icloud@cn,DIRECT
+  - GEOSITE,apple@cn,DIRECT
+  - GEOSITE,apple-cn,DIRECT
+  - GEOSITE,microsoft@cn,DIRECT
+  - GEOSITE,facebook,PROXY
+  - GEOSITE,youtube,PROXY
+  - GEOSITE,geolocation-cn,DIRECT
+  - GEOSITE,geolocation-!cn,PROXY
+  - GEOIP,telegram,PROXY,no-resolve
+  - GEOIP,private,DIRECT,no-resolve
+  - GEOIP,cn,DIRECT
+  - RULE-SET,google,REJECT
+  - MATCH,auto
