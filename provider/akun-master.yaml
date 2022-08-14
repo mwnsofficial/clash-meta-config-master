@@ -1,0 +1,15 @@
+proxies:   
+- name: "mastervpn"
+  type: trojan
+  server: bugmu.com
+  port: 443
+  password: xxxx-xxxx-xxxx-xxxxxxxx
+  udp: true
+  tls: true
+  network: ws
+  sni: id1-masterwifi.tech
+  skip-cert-verify: true
+  ws-opts:
+    path: /master
+    headers:
+      Host: id1-masterwifi.tech
